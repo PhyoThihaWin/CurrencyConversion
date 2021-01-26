@@ -15,18 +15,20 @@ import com.google.gson.JsonObject
 import com.nanolabs.currencyconversion.R
 import com.nanolabs.currencyconversion.model.ApiCurrency
 import com.nanolabs.currencyconversion.model.Currency
-import com.nanolabs.currencyconversion.utils.ConstantValue
-import com.nanolabs.currencyconversion.utils.Status
-import com.nanolabs.currencyconversion.utils.showToast
+import com.nanolabs.currencyconversion.model.Rate
+import com.nanolabs.currencyconversion.utils.*
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 import java.io.IOException
+import java.util.*
+import kotlin.collections.ArrayList
 
 
 class MainActivity : AppCompatActivity() {
 
 
+    private lateinit var prefManager: PrefManager
     private lateinit var mainViewModel: MainViewModel
     lateinit var progressDialog: ProgressDialog
 
@@ -35,12 +37,15 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         mainViewModel = ViewModelProvider(this).get(MainViewModel::class.java)
+        prefManager = PrefManager(this)
         progressDialog = ProgressDialog(this)
         progressDialog.setMessage("Please wait..")
         progressDialog.setCancelable(false)
 
         setupUI()
-        mainViewModel.fetchSupportedCurrency(ConstantValue.apiKey)
+        if (prefManager.getRefreshTime().isEmpty() || !prefManager.getRefreshTime().isHalfHour()) {
+            mainViewModel.fetchSupportedCurrency(ConstantValue.apiKey)
+        } else this.showToast("Time is ${prefManager.getRefreshTime()}")
 
     }
 
@@ -78,8 +83,9 @@ class MainActivity : AppCompatActivity() {
                 Status.SUCCESS -> {
                     progressDialog.dismiss()
                     it.data?.let { apiCurrency ->
-                        mainViewModel.insertCurrencyList(getJsonExtract(apiCurrency.currencies))
-                        Log.i("myDataCurrency", Gson().toJson(mainViewModel.getCurrencyList()))
+                        mainViewModel.insertCurrencyList(getCurrencyJson(apiCurrency.currencies))
+                        Log.i("myDataCurrency", Gson().toJson(mainViewModel.getRateList()))
+                        mainViewModel.fetchCurrencyRate(ConstantValue.apiKey)
                     }
                 }
                 Status.LOADING -> {
@@ -88,7 +94,28 @@ class MainActivity : AppCompatActivity() {
                 Status.ERROR -> {
                     //Handle Error
                     progressDialog.dismiss()
-                    Log.i("myError",it.message.toString())
+                    Log.i("myError", it.message.toString())
+                }
+            }
+        })
+
+        mainViewModel.apiRate.observe(this, Observer {
+            when (it.status) {
+                Status.SUCCESS -> {
+                    progressDialog.dismiss()
+                    it.data?.let { apiRate ->
+                        mainViewModel.insertRateList(getRateJson(apiRate.quotes))
+                        Log.i("myDataRate", Gson().toJson(mainViewModel.getRateList()))
+                        prefManager.setRefreshTime(Date().dateFormat())
+                    }
+                }
+                Status.LOADING -> {
+                    progressDialog.show()
+                }
+                Status.ERROR -> {
+                    //Handle Error
+                    progressDialog.dismiss()
+                    Log.i("myError", it.message.toString())
                 }
             }
         })
@@ -96,37 +123,7 @@ class MainActivity : AppCompatActivity() {
 
     }
 
-
-//    private fun getSupportedCurrency() {
-//        val progressDialog = ProgressDialog.show(this, "", "Please wait...")
-//        val call = ConstantValue.api.getSupportedCurrency(ConstantValue.apiKey)
-//        call.enqueue(object : Callback<ApiCurrency> {
-//            override fun onResponse(call: Call<ApiCurrency>, response: Response<ApiCurrency>) {
-//                progressDialog.dismiss()
-//                if (response.body() != null) {
-//                    Log.i("myCurrency1", response.body()!!.currencies.size().toString())
-//                    Log.i(
-//                        "myCurrency2",
-//                        getJsonExtract(response.body()!!.currencies).size.toString()
-//                    )
-//                    Log.i(
-//                        "myCurrency3",
-//                        Gson().toJson(getJsonExtract(response.body()!!.currencies))
-//                    )
-//                } else Log.i("Retrofit error", response.errorBody().toString())
-//            }
-//
-//            override fun onFailure(call: Call<ApiCurrency>, t: Throwable) {
-//                Log.i("Retrofit error", t.message.toString())
-//                if (t is IOException) {
-//                    this@MainActivity.showToast("No internet connection.")
-//                    progressDialog.dismiss()
-//                } else Log.i("Retrofit error", t.message.toString())
-//            }
-//        })
-//    }
-
-    fun getJsonExtract(jsonObject: JsonObject): List<Currency> {
+    fun getCurrencyJson(jsonObject: JsonObject): List<Currency> {
         val entries: Set<Map.Entry<String, JsonElement>> = jsonObject.entrySet()
         val currencyList: MutableList<Currency> = ArrayList()
         entries.forEach {
@@ -135,4 +132,12 @@ class MainActivity : AppCompatActivity() {
         return currencyList
     }
 
+    fun getRateJson(jsonObject: JsonObject): List<Rate> {
+        val entries: Set<Map.Entry<String, JsonElement>> = jsonObject.entrySet()
+        val rateList: MutableList<Rate> = ArrayList()
+        entries.forEach {
+            rateList.add(Rate(it.key, it.value.asDouble))
+        }
+        return rateList
+    }
 }

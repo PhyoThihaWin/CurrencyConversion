@@ -9,14 +9,12 @@ import retrofit2.http.*
 
 interface Api {
 
-//    @GET("list")
-//    fun getSupportedCurrency(@Query("access_key") accessKey: String): Call<ApiCurrency>
 
     @GET("list")
     suspend fun getSupportedCurrency(@Query("access_key") accessKey: String): Response<ApiCurrency>
 
     @GET("live")
-    fun getCurrencyRate(@Query("access_key") accessKey: String): Call<ApiRate>
+    suspend fun getCurrencyRate(@Query("access_key") accessKey: String): Response<ApiRate>
 
 
 //    @GET("categories")
