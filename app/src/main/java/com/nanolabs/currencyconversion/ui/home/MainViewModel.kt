@@ -89,6 +89,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 //    }
 
 
-    fun getCurrencyList() = mRepository.getCurrencyList()
-    fun getRateList() = mRepository.getRateList()
+    val currencyList = mRepository.currencyList
+    val rateList = mRepository.rateList
+
+    fun getRateByCurrency(currency: String) = mRepository.getRateByCurrency(currency)
+    fun getFullName(name:String) = mRepository.getFullName(name)
 }

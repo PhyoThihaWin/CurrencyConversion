@@ -37,6 +37,10 @@ class MainRepository(val currencyDao: CurrencyDao, val api: Api) {
         currencyDao.insertRateList(rateList)
     }
 
-    fun getCurrencyList() = currencyDao.getCurrencyList()
-    fun getRateList() = currencyDao.getRateList()
+    val currencyList = currencyDao.getCurrencyList()
+    val rateList = currencyDao.getRateList()
+
+    fun getRateByCurrency(currency: String) = currencyDao.getRateByName(currency)
+
+    fun getFullName(name:String) = currencyDao.getFullName(name)
 }

@@ -6,6 +6,12 @@ import androidx.room.PrimaryKey
 
 @Entity(tableName = "Currency")
 data class Currency(
-        @PrimaryKey @ColumnInfo(name = "name") val name: String,
-        @ColumnInfo(name = "full") val full: String
-)
+        @PrimaryKey @ColumnInfo(name = "shortName") val shortName: String,
+        @ColumnInfo(name = "fullName") val fullName: String
+){
+        override fun toString(): String {
+                return "$shortName ($fullName)"
+        }
+}
+
+

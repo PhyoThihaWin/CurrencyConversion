@@ -6,6 +6,7 @@ import androidx.room.PrimaryKey
 
 @Entity(tableName = "Rate")
 data class Rate(
-    @PrimaryKey @ColumnInfo(name = "name") val name: String,
-    @ColumnInfo(name = "rate") val rate: Double
+    @PrimaryKey @ColumnInfo(name = "rateName") val rateName: String,
+    @ColumnInfo(name = "rate") val rate: Double,
+    @ColumnInfo(name = "fullName") val fullName: String
 )

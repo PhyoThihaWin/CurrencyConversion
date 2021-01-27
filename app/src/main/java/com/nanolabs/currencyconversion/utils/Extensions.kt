@@ -6,6 +6,8 @@ import android.view.View
 import android.view.inputmethod.InputMethodManager
 import android.widget.Toast
 import com.google.android.material.snackbar.Snackbar
+import java.text.DecimalFormat
+import java.text.NumberFormat
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -56,5 +58,11 @@ fun String.isHalfHour(): Boolean {
 
         currentTime.before(calendar.time)
     } else false
+}
+
+fun Double.formatDecimal():String{
+    val formatter1 = DecimalFormat("0.00")
+    var formatter2 = DecimalFormat("#,###.##")
+    return (formatter2.format(this))
 }
 
